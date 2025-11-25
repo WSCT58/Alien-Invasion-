@@ -1,6 +1,6 @@
 class Settings:
     """A class to store all settings for Alien Invasion."""
-
+    #注：新增的内容的数值都要在新增的类中修改
     def __init__(self):
         """Initialize the game's static settings."""
         # Screen settings

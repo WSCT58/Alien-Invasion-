@@ -12,7 +12,7 @@ class Laser(Sprite):
         self.ship = ai_game.ship
 
         # 1. 创建激光的形状
-        # 宽度 = 15像素（稍微宽一点），高度 = 屏幕高度
+        # 宽度 = 60像素（稍微宽一点），高度 = 屏幕高度
         self.width = 60
         self.height = self.settings.screen_height
 
