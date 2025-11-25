@@ -115,9 +115,14 @@ pip install pygame==2.6.1
 ```
 
 ### 3. 运行游戏
-在终端中运行主程序：
+请先在终端中进入项目文件夹（注意：由于文件夹名包含空格，路径需加引号）：
+
 ```bash
-python alien_invasion.py
+# 进入你电脑上的Alien Invasion (外星人入侵 - 增强版)项目目录，路径要改成你的
+cd "Alien Invasion (外星人入侵 - 增强版)"
+
+# 运行主程序
+python main_alien_invasion.py
 ```
 ---
 
