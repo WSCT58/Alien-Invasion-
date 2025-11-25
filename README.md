@@ -1,6 +1,6 @@
 # 🛸 Alien Invasion - Enhanced Edition (外星人入侵：增强版)
 
-![Python](https://img.shields.io/badge/Python-3.11.14-blue) ![Pygame](https://img.shields.io/badge/Pygame-2.6.1-green) ![License](https://img.shields.io/badge/License-SDL-orange)
+![Python](https://img.shields.io/badge/Python-3.11.14-blue) ![Pygame](https://img.shields.io/badge/Pygame-2.6.1-green) 
 
 **外星人要入侵地球了！扣 1 和我一起积攒能量，释放终极激光！**
 
@@ -118,7 +118,7 @@ pip install pygame==2.6.1
 请先在终端中进入项目文件夹（注意：由于文件夹名包含空格，路径需加引号）：
 
 ```bash
-# 进入你电脑上的Alien Invasion (外星人入侵 - 增强版)项目目录，路径要改成你的
+# 进入你电脑上的Alien Invasion (外星人入侵 - 增强版)项目目录
 cd "Alien Invasion (外星人入侵 - 增强版)"
 
 # 运行主程序
