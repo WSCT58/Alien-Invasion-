@@ -155,6 +155,6 @@ python main_alien_invasion.py
 | **游戏截图 (Preview)** | **功能解析 (Technical Details)** |
 | :---: | :--- |
 | <img src="screenshots/start_screen.png" width="350" alt="Start Screen"> | **1. 沉浸式开始菜单 (Start Screen)**<br><br>**UI 模块 (`ui_manager.py`)**<br><ul><li>采用极简风格的按钮设计与交互逻辑。</li><li>背景不再是静态图片，而是由代码实时生成的**动态星空**。</li><li>解决了原版教程中素材在深色背景下的白边问题。</li></ul> |
-| <img src="screenshots/gameplay2.png" width="350" alt="Laser Skill"> | **2. 终极技能释放 (Ultimate Laser)**<br><br>**战斗模块 (`laser.py` & `skill_bar.py`)**<br><ul><li>**充能机制**：顶部能量条随击杀数积累（灰 ➝ 黄 ➝ 金）。</li><li>**大招释放**：当能量条变为金色时，按 `Up` 键释放激光。</li><li>**碰撞检测**：使用宽判定矩形，瞬间清除前方一整列敌人。</li></ul> |
+| <img src="screenshots/gameplay2 .png" width="350" alt="Laser Skill"> | **2. 终极技能释放 (Ultimate Laser)**<br><br>**战斗模块 (`laser.py` & `skill_bar.py`)**<br><ul><li>**充能机制**：顶部能量条随击杀数积累（灰 ➝ 黄 ➝ 金）。</li><li>**大招释放**：当能量条变为金色时，按 `Up` 键释放激光。</li><li>**碰撞检测**：使用宽判定矩形，瞬间清除前方一整列敌人。</li></ul> |
 | <img src="screenshots/boss_battle.png" width="350" alt="Boss Battle"> | **3. 史诗级 Boss 战 (Epic Boss Battle)**<br><br>**核心实体 (`boss.py` & `boss_bullet.py`)**<br><ul><li>**动态血条**：利用 Pygame 绘图接口，在 Boss 顶部实时渲染**红绿血条**，直观反馈剩余生命值。</li><li>**独立 AI**：Boss 拥有高额血量与独特的移动逻辑，并会周期性发射红色子弹进行反击。</li><li>**关卡机制**：每 3 个关卡（如 Level 3, 6）触发一次 Boss 挑战，暂停普通外星人生成。</li></ul> |
 | <img src="screenshots/game_over.png" width="350" alt="Game Over"> | **4. 数据结算与存档 (Game Over)**<br><br>**数据模块 (`game_stats.py`)**<br><ul><li>游戏结束时，系统会立即结算当前得分。</li><li>**持久化存储**：利用 JSON 技术将最高分写入 `high_score.json`。</li><li>支持快捷键 `Q` 退出或点击按钮一键重试。</li></ul> |
