@@ -14,7 +14,6 @@ class Ship(Sprite):
 
         # Load the ship image and get its rect.
         self.image = pygame.image.load('images/ship.bmp')
-
         #去除飞船原来的背景色
         self.image.set_colorkey((230, 230, 230))
 

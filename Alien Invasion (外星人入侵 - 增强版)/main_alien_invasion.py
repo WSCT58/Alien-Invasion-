@@ -2,6 +2,7 @@ import sys
 from time import sleep
 import json
 import pygame
+import random
 
 from settings import Settings
 from game_stats import GameStats
@@ -16,6 +17,8 @@ from ui_manager import UIManager
 from skill_bar import SkillBar
 from laser import Laser
 from sound_manager import SoundManager
+from boss import Boss
+from boss_bullet import BossBullet # 如果你加了 Boss 子弹
 
 class AlienInvasion:
     """Overall class to manage game assets and behavior."""
@@ -46,6 +49,10 @@ class AlienInvasion:
 
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
+        # --- 新增BOSS ---
+        self.boss_group = pygame.sprite.GroupSingle()  # GroupSingle 只能放一个精灵，适合 Boss
+        self.boss_bullets = pygame.sprite.Group()
+        self.is_boss_level = False  # 标记当前是否是 Boss 战
         #技能
         self.lasers = pygame.sprite.Group()
         # --- 新增：创建星星编组 ---
@@ -68,9 +75,15 @@ class AlienInvasion:
             if self.game_active:
                 self.ship.update()
                 self._update_bullets()
-                self._update_aliens()
-                # 更新激光（处理倒计时和消失）
-                self.lasers.update()
+
+                # --- 核心修改区 ---
+                if self.is_boss_level:
+                    self._update_boss()  # 如果是 Boss 关，只更新 Boss
+                else:
+                    self._update_aliens()  # 如果是普通关，只更新外星人
+                # ------------------
+
+                self.lasers.update()  # 更新激光
 
             self._update_screen()
             self.clock.tick(60)
@@ -84,6 +97,30 @@ class AlienInvasion:
             json.dump(saved_high_score, f)
 
         sys.exit()
+
+    def _update_boss(self):
+        """更新 Boss 位置、射击和碰撞"""
+        self.boss_group.update()
+        self.boss_bullets.update()
+
+        # 1. Boss 随机开火逻辑
+        if self.boss_group.sprite:  # 确保 Boss 活着
+            if random.randint(1, 60) == 1:  # 约每秒发射一次 (60帧)
+                new_bullet = BossBullet(self, self.boss_group.sprite)
+                self.boss_bullets.add(new_bullet)
+
+        # 2. 检测 Boss 子弹是否击中飞船
+        if pygame.sprite.spritecollideany(self.ship, self.boss_bullets):
+            self._ship_hit()
+
+        # 3. 检测 Boss 是否碰到飞船 (体术攻击)
+        if pygame.sprite.spritecollideany(self.ship, self.boss_group):
+            self._ship_hit()
+
+        # 4. 清除飞出屏幕的 Boss 子弹
+        for bullet in self.boss_bullets.copy():
+            if bullet.rect.top >= self.settings.screen_height:
+                self.boss_bullets.remove(bullet)
 
     def _check_events(self):
         """Respond to keypresses and mouse events."""
@@ -199,32 +236,67 @@ class AlienInvasion:
 
         self._check_bullet_alien_collisions()
 
+        # --- 新增：检查子弹打 Boss ---
+        if self.is_boss_level:
+            self._check_bullet_boss_collisions()
+
+    def _check_bullet_boss_collisions(self):
+        """处理子弹击中 Boss"""
+        # 检查子弹和 Boss 的碰撞
+        # 参数1: bullets, 参数2: boss_group
+        # True: 子弹消失, False: Boss 不消失 (因为要扣血)
+        collisions = pygame.sprite.groupcollide(
+            self.bullets, self.boss_group, True, False)
+
+        if collisions:
+            self.sounds.play_explosion()  # 播放音效
+            boss = self.boss_group.sprite
+            boss.hit(damage=1)  # 扣 1 血
+            self.skill_bar.charge()  # 打 Boss 也充能
+
+            # 如果 Boss 没血了
+            if boss.current_health <= 0:
+                self.boss_group.empty()  # 移除 Boss
+                self.boss_bullets.empty()  # 清空 Boss 子弹
+
+                # 加分 (Boss 分数高)
+                self.stats.score += 1000 * self.stats.level
+                self.sb.prep_score()
+
+                # 升级进入下一关
+                self._start_new_level()
+
+    def _start_new_level(self):
+        """清理并开始新等级"""
+        self.bullets.empty()
+        self.lasers.empty()
+        self.settings.increase_speed()
+        self.stats.level += 1
+        self.sb.prep_level()
+        self._create_fleet()  # 重新生成 (根据层数决定是 Boss 还是小兵)
+
     def _check_bullet_alien_collisions(self):
         """Respond to bullet-alien collisions."""
-        # Remove any bullets and aliens that have collided.
         collisions = pygame.sprite.groupcollide(
-                self.bullets, self.aliens, True, True)
+            self.bullets, self.aliens, True, True)
 
         if collisions:
             self.sounds.play_explosion()
             for aliens in collisions.values():
                 self.stats.score += self.settings.alien_points * len(aliens)
-                #每击杀一个敌人，给技能条充能
                 for _ in range(len(aliens)):
                     self.skill_bar.charge()
 
             self.sb.prep_score()
             self.sb.check_high_score()
 
-        if not self.aliens:
-            # Destroy existing bullets and create new fleet.
+        # ✅ 只有在【不是 Boss 关】且外星人被清空时才进入下一关
+        if not self.is_boss_level and not self.aliens:
             self.bullets.empty()
-            self._create_fleet()
             self.settings.increase_speed()
-
-            # Increase level.
             self.stats.level += 1
             self.sb.prep_level()
+            self._create_fleet()
 
     def _ship_hit(self):
         """Respond to the ship being hit by an alien."""
@@ -275,22 +347,36 @@ class AlienInvasion:
             star = Star(self)
             self.stars.add(star)
 
+
     def _create_fleet(self):
-        """Create the fleet of aliens."""
-        # Create an alien and keep adding aliens until there's no room left.
-        # Spacing between aliens is one alien width and one alien height.
-        alien = Alien(self)
-        alien_width, alien_height = alien.rect.size
+        """创建外星人舰队或者 Boss"""
+        if self.stats.level % 3 == 0:
+            self.is_boss_level = True
+            self._create_boss()
+        else:
+            self.is_boss_level = False
 
-        current_x, current_y = alien_width, alien_height
-        while current_y < (self.settings.screen_height - 3 * alien_height):
-            while current_x < (self.settings.screen_width - 2 * alien_width):
-                self._create_alien(current_x, current_y)
-                current_x += 2 * alien_width
+            alien = Alien(self)
+            alien_width, alien_height = alien.rect.size
 
-            # Finished a row; reset x value, and increment y value.
-            current_x = alien_width
-            current_y += 2 * alien_height
+            current_x, current_y = alien_width, alien_height
+
+            # --- 修改点 1：控制行数 (垂直方向) ---
+            while current_y < (self.settings.screen_height - 4 * alien_height):
+
+                # --- 修改点 2：控制列数 (水平方向) ---
+                while current_x < (self.settings.screen_width - 4 * alien_width):
+                    self._create_alien(current_x, current_y)
+                    current_x += 2 * alien_width
+
+                # Finished a row; reset x value, and increment y value.
+                current_x = alien_width
+                current_y += 2 * alien_height
+
+    def _create_boss(self):
+        """创建 Boss"""
+        boss = Boss(self)
+        self.boss_group.add(boss)
 
     def _create_alien(self, x_position, y_position):
         """Create an alien and place it in the fleet."""
@@ -318,23 +404,30 @@ class AlienInvasion:
         self.screen.fill(self.settings.bg_color)
         self.stars.draw(self.screen)
 
-        '''for bullet in self.bullets.sprites():
-            bullet.draw_bullet()
-        self.ship.blitme()
-        self.aliens.draw(self.screen)
-
-        # Draw the score information.
-        self.sb.show_score()'''
-
-        #只有游戏进行中才画飞船和外星人
+        # 只有游戏进行中才画飞船和外星人
         if self.game_active:
             self.ship.blitme()
-            self.aliens.draw(self.screen)
+
+            # --- 【修复点】在这里区分画 Boss 还是画普通外星人 ---
+            if self.is_boss_level:
+                # 1. 绘制 Boss
+                for boss in self.boss_group.sprites():
+                    boss.blitme()
+                # 2. 绘制 Boss 的子弹
+                for bullet in self.boss_bullets.sprites():
+                    bullet.draw_bullet()
+            else:
+                # 不是 Boss 关才画普通外星人
+                self.aliens.draw(self.screen)
+            # ------------------------------------------------
+
             for bullet in self.bullets.sprites():
                 bullet.draw_bullet()
+
             # 绘制激光
             for laser in self.lasers.sprites():
                 laser.draw_laser()
+
             self.sb.show_score()
             # 技能条
             self.skill_bar.draw_bar()
@@ -343,13 +436,14 @@ class AlienInvasion:
         if not self.game_active:
             self.play_button.draw_button()
 
-            #使用 self.ui 来调用方法
             if self.stats.game_over:
                 self.ui.show_game_over()
             else:
                 self.ui.show_start_screen()
 
         pygame.display.flip()
+
+
 
 
 if __name__ == '__main__':

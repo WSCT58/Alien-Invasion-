@@ -8,21 +8,25 @@
 
 ## 📝 项目摘要 (Abstract)
 
-本项目是基于经典 Python 教学案例《Alien Invasion》进行的**深度重构与功能扩展**。作为 Python 程序设计课程的进阶实验项目，本项目在原版基础上引入了**面向对象设计模式 (OOP)**、**技能充能系统**、**粒子背景特效**以及**模块化 UI 架构**。
+本项目是基于经典 Python 教学案例《Alien Invasion》进行的**深度重构与功能扩展**。作为 Python 程序设计课程的进阶实验项目，本项目在原版基础上引入了**面向对象设计模式 (OOP)**、**Boss 战斗机制**、**技能充能系统**、**粒子背景特效**以及**模块化 UI 架构**。
 
-相比于基础教程版本，本项目极大地提升了游戏的可玩性与视觉表现——新增了**激光贯穿大招**、**动态星空**及**沉浸式音效反馈**。经过测试，本项目可以在 **Python 3.11.14** 环境下完美运行。
+相比于基础教程版本，本项目极大地提升了游戏的可玩性与挑战性——新增了**具有独立 AI 的 Boss**、**激光贯穿大招**、**动态星空**及**沉浸式音效反馈**。经过测试，本项目可以在 **Python 3.11.14** 环境下完美运行。
 
 
 
 ## ✨ 核心特性 (Key Features)
 
 ### 1. ⚔️ 进阶战斗系统
+*   **史诗级 Boss 挑战 (Epic Boss Battle)**：
+    *   **关卡机制**：引入周期性挑战，每隔 3 个关卡（如 Level 3, 6...）会出现一名高血量的 Boss。
+    *   **动态血条**：Boss 顶部实时渲染红绿血条，直观反馈战斗进度。
+    *   **独立 AI 与反击**：Boss 拥有独特的移动逻辑，并会发射专属的红色子弹攻击玩家，极大地丰富了战斗体验。
 *   **技能充能机制 (Skill Charge Bar)**：
     *   引入 RPG 元素的资源管理。屏幕顶部设有能量条，每击杀 1 个外星人可积累 1 格能量。
     *   **UI 动态反馈**：能量条颜色随进度变化（灰色 ➝ 黄色 ➝ 金色）。
 *   **终极技能 - 激光贯穿 (Ultimate Laser)**：
     *   当能量条积满 5 格（变更为金色状态）时，玩家可按 `Up` 键释放。
-    *   激光具有独立的视觉特效与宽判定范围，可**瞬间清除飞船前方的一整列敌人**，带来爽快的清屏体验。
+    *   激光具有独立的视觉特效与宽判定范围，可**瞬间清除飞船前方的一整列敌人**（包括对 Boss 造成伤害），带来爽快的清屏体验。
 
 ### 2. 🎨 视觉与 UI 增强
 *   **模块化 UI 管理**：通过 `UIManager` 类独立处理 `Start Screen`（极简开始菜单）与 `Game Over`（结算界面），逻辑解耦，交互更清晰。
@@ -50,6 +54,8 @@
 *   **`scoreboard.py`**：[视图] 游戏内 HUD 显示（分数、等级、余命）
 *   **`sound_manager.py`**：[音频] 音效与背景音乐统一管理
 *   **`skill_bar.py`**：[功能] 技能充能条逻辑与绘制
+*   **`boss.py`**：[实体] **Boss 类**，包含血量管理、移动AI与血条绘制
+*   **`boss_bullet.py`**：[实体] **Boss 子弹类**，独立的攻击弹道逻辑
 *   **`laser.py`**：[实体] 激光大招实体类
 *   **`star.py`**：[视觉] 动态星空背景生成
 *   **`ship.py`**：[实体] 玩家飞船类
@@ -150,6 +156,5 @@ python main_alien_invasion.py
 | :---: | :--- |
 | <img src="screenshots/start_screen.png" width="350" alt="Start Screen"> | **1. 沉浸式开始菜单 (Start Screen)**<br><br>**UI 模块 (`ui_manager.py`)**<br><ul><li>采用极简风格的按钮设计与交互逻辑。</li><li>背景不再是静态图片，而是由代码实时生成的**动态星空**。</li><li>解决了原版教程中素材在深色背景下的白边问题。</li></ul> |
 | <img src="screenshots/gameplay2.png" width="350" alt="Laser Skill"> | **2. 终极技能释放 (Ultimate Laser)**<br><br>**战斗模块 (`laser.py` & `skill_bar.py`)**<br><ul><li>**充能机制**：顶部能量条随击杀数积累（灰 ➝ 黄 ➝ 金）。</li><li>**大招释放**：当能量条变为金色时，按 `Up` 键释放激光。</li><li>**碰撞检测**：使用宽判定矩形，瞬间清除前方一整列敌人。</li></ul> |
-| <img src="screenshots/game_over.png" width="350" alt="Game Over"> | **3. 数据结算与存档 (Game Over)**<br><br>**数据模块 (`game_stats.py`)**<br><ul><li>游戏结束时，系统会立即结算当前得分。</li><li>**持久化存储**：利用 JSON 技术将最高分写入 `high_score.json`。</li><li>支持快捷键 `Q` 退出或点击按钮一键重试。</li></ul> |
-
----
+| <img src="screenshots/boss_battle.png" width="350" alt="Boss Battle"> | **3. 史诗级 Boss 战 (Epic Boss Battle)**<br><br>**核心实体 (`boss.py` & `boss_bullet.py`)**<br><ul><li>**动态血条**：利用 Pygame 绘图接口，在 Boss 顶部实时渲染**红绿血条**，直观反馈剩余生命值。</li><li>**独立 AI**：Boss 拥有高额血量与独特的移动逻辑，并会周期性发射红色子弹进行反击。</li><li>**关卡机制**：每 3 个关卡（如 Level 3, 6）触发一次 Boss 挑战，暂停普通外星人生成。</li></ul> |
+| <img src="screenshots/game_over.png" width="350" alt="Game Over"> | **4. 数据结算与存档 (Game Over)**<br><br>**数据模块 (`game_stats.py`)**<br><ul><li>游戏结束时，系统会立即结算当前得分。</li><li>**持久化存储**：利用 JSON 技术将最高分写入 `high_score.json`。</li><li>支持快捷键 `Q` 退出或点击按钮一键重试。</li></ul> |
